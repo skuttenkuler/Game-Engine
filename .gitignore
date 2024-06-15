@@ -1,0 +1,47 @@
+# Ignore build artifacts
+build/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.ilk
+*.aps
+*.ipch
+*.lib
+*.exp
+
+# Ignore cmake build directory
+CMakeFiles/
+CMakeCache.txt
+CMakeScripts/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+install_manifest.txt
+
+# Ignore Visual Studio files
+*.suo
+*.user
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.pdb
+*.idb
+*.manifest
+*.cache
+*.ncb
+*.sdf
+*.opensdf
+*.sln.docstates
+*.suo
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.log
+*.bin
+*.log
+*.ilk
