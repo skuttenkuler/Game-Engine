@@ -13,7 +13,7 @@ set(SOURCES ./main.cpp)
 add_executable(main WIN32 ${SOURCES})
 
 #link
-target_link_libraries(main PRIVATE user32)
+target_link_libraries(main PRIVATE user32 Gdi32)
 
 #build release
 set(CMAKE_BUILD_TYPE Release)
