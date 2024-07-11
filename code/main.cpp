@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <stdint.h>
+#include <xinput.h>
 
 #define internal static
 #define local_persist static
@@ -23,11 +24,20 @@ struct win32_offscreen_buffer
   int Height;
   int Pitch;
 };
+
 struct win32_window_dimension
 {
   int Width;
   int Height;
 };
+
+typedef DWORD WINAPI x_input_get_state(DWORD dwUserIndex, XINPUT_STATE *pState);
+typedef DWORD WINAPI x_input_set_state(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration);
+
+global_variable x_input_get_state *XInputGetState_;
+global_variable x_input_set_state *XInputSetState_;
+#define xInputGetState XInputGetState_
+#define xInputSetState XInputSetState_
 
 global_variable bool running;
 global_variable win32_offscreen_buffer GlobalBackBuffer;
@@ -191,7 +201,6 @@ if(RegisterClass(&WindowClass))
       running = true;
       while(running)
       {
-        //proccess/flush queue
         MSG Message;
         while (PeekMessage(&Message,0,0,0, PM_REMOVE)) {
             if(Message.message == WM_QUIT){
@@ -200,7 +209,36 @@ if(RegisterClass(&WindowClass))
             TranslateMessage(&Message);
             DispatchMessage(&Message);
         }
-    
+        //gamepad input devices
+        for(DWORD controllerIndex = 0; controllerIndex < XUSER_MAX_COUNT; ++controllerIndex)
+        {
+          XINPUT_STATE controllerState;
+          if(XInputGetState(controllerIndex, &controllerState) == ERROR_SUCCESS)
+          {
+            //controller exists
+            XINPUT_GAMEPAD *Pad = &controllerState.Gamepad;
+
+            bool Up = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
+            bool Down = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
+            bool Left = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
+            bool Right = (Pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
+            bool Start = (Pad->wButtons & XINPUT_GAMEPAD_START);
+            bool BACK = (Pad->wButtons & XINPUT_GAMEPAD_BACK);
+            bool LeftShoulder = (Pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+            bool RightShoulder = (Pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+            bool AButton = (Pad->wButtons & XINPUT_GAMEPAD_A);
+            bool BButton = (Pad->wButtons & XINPUT_GAMEPAD_B);
+            bool XButton = (Pad->wButtons & XINPUT_GAMEPAD_X);
+            bool YButton = (Pad->wButtons & XINPUT_GAMEPAD_Y);
+
+            int16 StickX = Pad->sThumbLX;
+            int16 StickY = Pad->sThumbLY;
+          }
+          else
+          {
+            //controller does not exist
+          }
+        }
         RenderGradient(GlobalBackBuffer,XOffset,YOffset);
         win32_window_dimension Dimension = Win32GetWindowDimension(Window);
         Win32DisplayBufferWindow(DeviceContext, Dimension.Width, Dimension.Height, GlobalBackBuffer);
