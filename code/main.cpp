@@ -31,18 +31,39 @@ struct win32_window_dimension
   int Height;
 };
 
-typedef DWORD WINAPI x_input_get_state(DWORD dwUserIndex, XINPUT_STATE *pState);
-typedef DWORD WINAPI x_input_set_state(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration);
-
-global_variable x_input_get_state *XInputGetState_;
-global_variable x_input_set_state *XInputSetState_;
-#define xInputGetState XInputGetState_
-#define xInputSetState XInputSetState_
-
 global_variable bool running;
 global_variable win32_offscreen_buffer GlobalBackBuffer;
 
-win32_window_dimension Win32GetWindowDimension(HWND Window)
+#define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
+typedef X_INPUT_GET_STATE(x_input_get_state);
+X_INPUT_GET_STATE(xInputGetStateStub)
+{
+  return -0;
+}
+global_variable x_input_get_state *XInputGetState_ = xInputGetStateStub;
+#define XInputGetState XInputGetState_
+
+#define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
+typedef X_INPUT_SET_STATE(x_input_set_state);
+X_INPUT_SET_STATE(xInputSetStateStub)
+{
+  return 0;
+}
+global_variable x_input_set_state *XInputSetState_ = xInputSetStateStub;
+#define XInputSetState XInputSetState_
+
+internal void Win32LoadXInput(void)
+{
+  HMODULE XInputLibrary = LoadLibrary("xinput1_3.dll");
+  if(XInputLibrary)
+  {
+    XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary,"XInputGetState");
+    XInputSetState = (x_input_set_state *)GetProcAddress(XInputLibrary,"XInputSetState");
+  }
+}
+
+
+internal win32_window_dimension Win32GetWindowDimension(HWND Window)
 {
   win32_window_dimension result;
   RECT ClientRect;
@@ -109,7 +130,7 @@ internal void Win32DisplayBufferWindow(HDC DeviceContext, int WindowWidth,int Wi
       );
 }
 
-LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
+internal LRESULT CALLBACK Win32MainWindowCallback(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
   LRESULT Result = 0;
 
@@ -168,6 +189,7 @@ WinMain(HINSTANCE Instance,
 	      LPSTR CommandLine,  
         int ShowCode)
 {
+  Win32LoadXInput();
   WNDCLASS WindowClass ={};
 
   WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
@@ -233,6 +255,11 @@ if(RegisterClass(&WindowClass))
 
             int16 StickX = Pad->sThumbLX;
             int16 StickY = Pad->sThumbLY;
+          
+            if(AButton)
+            {
+              YOffset += 2;
+            }
           }
           else
           {
