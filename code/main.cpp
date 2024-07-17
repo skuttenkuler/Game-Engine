@@ -266,6 +266,10 @@ if(RegisterClass(&WindowClass))
             //controller does not exist
           }
         }
+        XINPUT_VIBRATION Vibration;
+        Vibration.wLeftMotorSpeed = 6000;
+        Vibration.wRightMotorSpeed = 6000;
+        XInputSetState(0,&Vibration);
         RenderGradient(GlobalBackBuffer,XOffset,YOffset);
         win32_window_dimension Dimension = Win32GetWindowDimension(Window);
         Win32DisplayBufferWindow(DeviceContext, Dimension.Width, Dimension.Height, GlobalBackBuffer);
