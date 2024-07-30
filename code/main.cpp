@@ -1,3 +1,4 @@
+//42:32 - 6
 #include <windows.h>
 #include <stdint.h>
 #include <xinput.h>
@@ -54,7 +55,7 @@ global_variable x_input_set_state *XInputSetState_ = xInputSetStateStub;
 
 internal void Win32LoadXInput(void)
 {
-  HMODULE XInputLibrary = LoadLibrary("xinput1_3.dll");
+  HMODULE XInputLibrary = LoadLibraryA("xinput1_3.dll");
   if(XInputLibrary)
   {
     XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary,"XInputGetState");
@@ -150,6 +151,72 @@ switch (Message) {
       running = false;
     }
     break;
+  case WM_SYSKEYDOWN:
+
+  case WM_SYSKEYUP:
+
+  case WM_KEYDOWN:
+
+  case WM_KEYUP:
+    {
+      uint32 VKCode = wParam;
+      bool wasDown = ((lParam & (1 << 30)) != 0);
+      bool isDown = ((lParam & (1 << 31)) == 0); 
+      if(wasDown != isDown){
+        if(VKCode == 'W')
+        {
+
+        }
+        else if (VKCode == 'A') 
+        {
+          
+        }
+        else if (VKCode == 'S') 
+        {
+          
+        }
+        else if (VKCode == 'D') 
+        {
+          
+        }
+        else if (VKCode == 'Q') 
+        {
+          
+        }
+        else if (VKCode == 'E') 
+        {
+          
+        }
+        else if (VKCode == VK_UP) 
+        {
+          
+        }
+        else if (VKCode == VK_DOWN) 
+        {
+          
+        }
+        else if (VKCode == VK_RIGHT) 
+        {
+          
+        }
+        else if (VKCode == VK_LEFT) 
+        {
+          
+        }
+        else if (VKCode == VK_ESCAPE) 
+        {
+          
+        }
+        else if (VKCode == VK_SPACE) 
+        {
+          
+        }
+
+      }
+      lParam & (1 << 30);
+    }
+    break;
+  
 
   case WM_CLOSE:
     {
@@ -190,7 +257,7 @@ WinMain(HINSTANCE Instance,
         int ShowCode)
 {
   Win32LoadXInput();
-  WNDCLASS WindowClass ={};
+  WNDCLASSA WindowClass ={};
 
   WindowClass.style = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
   WindowClass.lpfnWndProc = Win32MainWindowCallback;
@@ -259,6 +326,16 @@ if(RegisterClass(&WindowClass))
             if(AButton)
             {
               YOffset += 2;
+        XINPUT_VIBRATION Vibration;
+        Vibration.wLeftMotorSpeed = 100000;
+        Vibration.wRightMotorSpeed = 100000;
+        XInputSetState(0,&Vibration);
+            }else{
+            
+        XINPUT_VIBRATION Vibration;
+        Vibration.wLeftMotorSpeed = 0;
+        Vibration.wRightMotorSpeed = 0;
+        XInputSetState(0,&Vibration);
             }
           }
           else
@@ -266,10 +343,6 @@ if(RegisterClass(&WindowClass))
             //controller does not exist
           }
         }
-        XINPUT_VIBRATION Vibration;
-        Vibration.wLeftMotorSpeed = 6000;
-        Vibration.wRightMotorSpeed = 6000;
-        XInputSetState(0,&Vibration);
         RenderGradient(GlobalBackBuffer,XOffset,YOffset);
         win32_window_dimension Dimension = Win32GetWindowDimension(Window);
         Win32DisplayBufferWindow(DeviceContext, Dimension.Width, Dimension.Height, GlobalBackBuffer);
