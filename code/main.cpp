@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <xinput.h>
+#include <dsound.h>
 
 #define internal static
 #define local_persist static
@@ -53,9 +54,12 @@ X_INPUT_SET_STATE(xInputSetStateStub)
 global_variable x_input_set_state *XInputSetState_ = xInputSetStateStub;
 #define XInputSetState XInputSetState_
 
+#define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPGUID pcGuideDevice, LPDIRECTSOUND *ppDS, LPUNKNOWN  pUnkOuter)
+typedef DIRECT_SOUND_CREATE(direct_sound_create);
 internal void Win32LoadXInput(void)
 {
   HMODULE XInputLibrary = LoadLibraryA("xinput9_1_0.dll");
+
   if(XInputLibrary)
   {
     XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary,"XInputGetState");
@@ -162,7 +166,8 @@ switch (Message) {
       uint32 VKCode = wParam;
       bool wasDown = ((lParam & (1 << 30)) != 0);
       bool isDown = ((lParam & (1 << 31)) == 0); 
-      if(wasDown != isDown){
+      if(wasDown != isDown)
+      {
         if(VKCode == 'W')
         {
 
@@ -212,8 +217,9 @@ switch (Message) {
           
         }
       }
-      bool32 AltKeyDown = (lParam & (1 << 29))
-      else if ((VKCode == VK_F4 && AltKeyDown) {
+      bool32 AltKeyDown = (lParam & (1 << 29));
+      else if (VKCode == VK_F4 && AltKeyDown) 
+      {
         running = false;
       }
     }
@@ -289,6 +295,46 @@ if(RegisterClass(&WindowClass))
       HDC DeviceContext = GetDC(Window);
       int XOffset = 0;
       int YOffset = 0;
+
+      internal void Win32InitDSound(HWND Window, int32 BufferSize)
+      {
+        //library
+        HMODULE DSoundLibrary = LoadLibraryA("dsound.dll")
+        if(DSoundLibrary)
+        {
+          direct_sound_create *DirectSoundCreate = (direct_sound_create *);
+          GetProcAddress(DSoundLibrary, "DirectSoundCreate");
+          LPDIRECTSOUND DirectSound;   
+          if(DirectSoundCreate && SUCCEEDED(DirectSoundCreate(0,&DirectSound,0))
+          {
+            if(SUCCEEDED(DirectSound->SetCooperativeLevel(Window, DSSCL_PRIORITY)))
+            {
+              BUFFERDESC BufferDescription = {};
+              BufferDescription.dwSize = sizeof(BufferDescription);
+              BufferDescription.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+              LPDIRECTSOUNDBUFFER PrimaryBuffer;
+              if(SUCCEEDED(CreateSoundBuffer(BufferDescription, PrimaryBuffer, 0)
+              {
+
+              }
+            }else 
+            {
+             //log couldn't set buffer format 
+            }
+              //get direct sound obj
+              //create primary buffer
+              // create secondary buffer
+              BufferDescription.dwBufferBytes = BufferSize;
+
+          }
+          else 
+          {
+           //logging erre  
+            
+          }
+        }
+      }
       running = true;
       while(running)
       {
