@@ -1,4 +1,3 @@
-//42:32 - 6
 #include <windows.h>
 #include <stdint.h>
 #include <xinput.h>
@@ -16,6 +15,7 @@ typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
+typedef int32 bool32;
 
 struct win32_offscreen_buffer
 {
@@ -39,7 +39,7 @@ global_variable win32_offscreen_buffer GlobalBackBuffer;
 typedef X_INPUT_GET_STATE(x_input_get_state);
 X_INPUT_GET_STATE(xInputGetStateStub)
 {
-  return -0;
+  return(ERROR_DEVICE_NOT_CONNECTED);
 }
 global_variable x_input_get_state *XInputGetState_ = xInputGetStateStub;
 #define XInputGetState XInputGetState_
@@ -48,14 +48,14 @@ global_variable x_input_get_state *XInputGetState_ = xInputGetStateStub;
 typedef X_INPUT_SET_STATE(x_input_set_state);
 X_INPUT_SET_STATE(xInputSetStateStub)
 {
-  return 0;
+  return (ERROR_DEVICE_NOT_CONNECTED);
 }
 global_variable x_input_set_state *XInputSetState_ = xInputSetStateStub;
 #define XInputSetState XInputSetState_
 
 internal void Win32LoadXInput(void)
 {
-  HMODULE XInputLibrary = LoadLibraryA("xinput1_3.dll");
+  HMODULE XInputLibrary = LoadLibraryA("xinput9_1_0.dll");
   if(XInputLibrary)
   {
     XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary,"XInputGetState");
@@ -76,20 +76,20 @@ internal win32_window_dimension Win32GetWindowDimension(HWND Window)
 
 }
 
-internal void RenderGradient(win32_offscreen_buffer Buffer, int XOffset,int YOffset)
+internal void RenderGradient(win32_offscreen_buffer *Buffer, int XOffset,int YOffset)
 {
   
-  uint8 *Row =(uint8 *)Buffer.Memory;
+  uint8 *Row =(uint8 *)Buffer->Memory;
   
-  for(int Y = 0; Y < Buffer.Height; ++Y){
+  for(int Y = 0; Y < Buffer->Height; ++Y){
     uint32 *Pixel = (uint32 *)Row;
-    for(int X = 0; X < Buffer.Width; ++X){
+    for(int X = 0; X < Buffer->Width; ++X){
       uint8 Blue = (X + XOffset);
       uint8 Green = (Y + YOffset);
 
       *Pixel++ = ((Green << 8) | Blue);
     }
-    Row += Buffer.Pitch;
+    Row += Buffer->Pitch;
   }
 }
 
@@ -118,14 +118,14 @@ internal void Win32ResizeDIBSection(win32_offscreen_buffer *Buffer, int Width, i
   Buffer->Pitch = Width*BytesPerPixel;
 }
 
-internal void Win32DisplayBufferWindow(HDC DeviceContext, int WindowWidth,int WindowHeight, win32_offscreen_buffer Buffer)
+internal void Win32DisplayBufferWindow(win32_offscreen_buffer *Buffer, HDC DeviceContext, int WindowWidth,int WindowHeight)
 {
   StretchDIBits(
       DeviceContext,
       0, 0, WindowWidth, WindowHeight, 
-      0, 0, Buffer.Width, Buffer.Height, 
-      Buffer.Memory,
-      &Buffer.Info,
+      0, 0, Buffer->Width, Buffer->Height, 
+      Buffer->Memory,
+      &Buffer->Info,
       DIB_RGB_COLORS,
       SRCCOPY
       );
@@ -211,9 +211,11 @@ switch (Message) {
         {
           
         }
-
       }
-      lParam & (1 << 30);
+      bool32 AltKeyDown = (lParam & (1 << 29))
+      else if ((VKCode == VK_F4 && AltKeyDown) {
+        running = false;
+      }
     }
     break;
   
@@ -235,7 +237,7 @@ switch (Message) {
       PAINTSTRUCT Paint;
       HDC DeviceContext = BeginPaint( Window, &Paint);
       win32_window_dimension Dimension = Win32GetWindowDimension(Window);
-      Win32DisplayBufferWindow(DeviceContext, Dimension.Width, Dimension.Height,GlobalBackBuffer);
+      Win32DisplayBufferWindow(&GlobalBackBuffer,DeviceContext, Dimension.Width, Dimension.Height);
       EndPaint(Window, &Paint);
     }
     break;
@@ -343,9 +345,9 @@ if(RegisterClass(&WindowClass))
             //controller does not exist
           }
         }
-        RenderGradient(GlobalBackBuffer,XOffset,YOffset);
+        RenderGradient(&GlobalBackBuffer,XOffset,YOffset);
         win32_window_dimension Dimension = Win32GetWindowDimension(Window);
-        Win32DisplayBufferWindow(DeviceContext, Dimension.Width, Dimension.Height, GlobalBackBuffer);
+        Win32DisplayBufferWindow(&GlobalBackBuffer,DeviceContext, Dimension.Width, Dimension.Height);
 
         ++XOffset;
         YOffset += 2;
